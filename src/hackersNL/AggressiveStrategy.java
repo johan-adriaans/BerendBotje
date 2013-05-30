@@ -21,6 +21,7 @@ public class AggressiveStrategy extends Strategy
 	
 	protected int targetLessTurns = 0;
 	protected int aggressiveTurns = 0;
+	protected int shotlessTurns = 0;
 	
 	public AggressiveStrategy()
 	{
@@ -52,7 +53,7 @@ public class AggressiveStrategy extends Strategy
 	public void onScannedRobot( BerendBotje me, ScannedRobotEvent e )
 	{
 		// Update this enemy's data in the enemy stack
-		me.getData().addEnemy( new Enemy( me, e ) );
+		Enemy enemy = me.getData().processScanEvent( e, me );
 
 		// Only attack current target
 		if ( me.getData().hasTarget() ) {
@@ -61,7 +62,7 @@ public class AggressiveStrategy extends Strategy
 				me.setDebugProperty("lastScannedRobot", e.getName() + " at " + e.getBearing() + " degrees at time " + me.getTime());
 				
 				// Get firepower based on remaining energy
-				double firePower = ( me.getEnergy() < 20 ) ? 1 : 3 ;
+				double firePower = Math.min( 3, Math.max( .1, me.getEnergy() / 25 ) );
 				me.setDebugProperty( "lastFirePower", "Power level " + firePower );
 				
 				// Calculate bullet speed
@@ -81,7 +82,7 @@ public class AggressiveStrategy extends Strategy
 				double enemyVelocity = e.getVelocity();
 				 
 				double time = 0;
-				double battleFieldHeight = me.getBattleFieldHeight(), 
+				double battleFieldHeight = me.getBattleFieldHeight(),
 				       battleFieldWidth = me.getBattleFieldWidth();
 				
 				predictedX = lastScannedX;
@@ -89,18 +90,22 @@ public class AggressiveStrategy extends Strategy
 				while( ++time * bulletSpeed < Point2D.Double.distance( myX, myY, predictedX, predictedY ) ){		
 					predictedX += Math.sin(enemyHeading) * enemyVelocity;
 					predictedY += Math.cos(enemyHeading) * enemyVelocity;
-					double sanitycheck = predictedX / predictedY;
+					//double sanitycheck = predictedX / predictedY;
 					predictedX = Math.min( Math.max( 18.0, predictedX ), battleFieldWidth - 18.0 );	
 					predictedY = Math.min( Math.max( 18.0, predictedY ), battleFieldHeight - 18.0 );
-					if ( sanitycheck != predictedX / predictedY ) break;
+					//if ( sanitycheck != predictedX / predictedY ) break;
 				}
 				
 				double theta = Utils.normalAbsoluteAngle( Math.atan2( predictedX - me.getX(), predictedY - me.getY() ) );
 				me.setTurnGunRightRadians( Utils.normalRelativeAngle( theta - me.getGunHeadingRadians() ) );
 				me.setTurnRadarRightRadians( Utils.normalRelativeAngle( absoluteBearing - me.getRadarHeadingRadians() ) );
 				
-				if ( firePower > Rules.MIN_BULLET_POWER && me.getGunTurnRemaining() <= 1 && me.getGunHeat() == 0 ) {
+				if ( shotlessTurns > 90 | ( e.getDistance() < 200 && firePower > Rules.MIN_BULLET_POWER && me.getGunTurnRemaining() <= 1 && me.getGunHeat() == 0 ) ) {
+					enemy.addShot(); // Update shot counter to detect strategy effectiveness
 					me.setFire( firePower );
+					shotlessTurns = 0;
+				} else {
+					shotlessTurns++;
 				}
 				
 				me.setDebugProperty("Target position prediction", predictedX + "x" + predictedY );
@@ -157,6 +162,7 @@ public class AggressiveStrategy extends Strategy
 		g.setColor(new Color(0xff, 0x00, 0x00, 0x80));
 		g.drawLine(lastScannedX, lastScannedY, (int) me.getX(), (int) me.getY());
 		g.fillRect(lastScannedX - 20, lastScannedY - 20, 40, 40);
+		g.fillRect((int) me.getX() - 20, (int) me.getY() - 20, 40, 40);
 
 		g.setColor(new Color(0xff, 0x00, 0xff, 0x80));
 		g.drawLine( (int) predictedX, (int) predictedY, (int) me.getX(), (int) me.getY());

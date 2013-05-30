@@ -3,6 +3,7 @@ package hackersNL;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.util.EmptyStackException;
 import java.util.Stack;
 
 
@@ -30,6 +31,7 @@ public class BerendBotje extends AdvancedRobot
 		strategies.push( new DataStrategy() );
 		strategies.push( new ScanStrategy() );
 		strategies.push( new DefaultMovementStrategy() );
+		//strategies.push( new ReactMovementStrategy() );
 		
 		// Main loop
 		while (true) {
@@ -53,6 +55,23 @@ public class BerendBotje extends AdvancedRobot
 			}
 		}
 		strategies.push( strategy );
+	}
+	
+	/**
+	 * Get the active strategy of a specific strategy type
+	 * 
+	 * @param int	Strategy.TYPE_MOVE, Strategy.TYPE_AIM, Strategy.TYPE_SCAN
+	 * @return
+	 */
+	public Strategy getActiveStrategy( int type )
+	{
+		for ( int i = 0; i < strategies.size() ; i++ ) {
+			if ( strategies.get( i ).collidesWithType( type ) ) {
+				Strategy strategy = strategies.get( i );
+				return strategy;
+			}
+		}
+		throw new EmptyStackException();
 	}
 	
 	@Override
@@ -99,6 +118,13 @@ public class BerendBotje extends AdvancedRobot
 	{
 		for ( int i = 0; i < strategies.size() ; i++ ) {
 			strategies.get( i ).onHitRobot( this, e );
+		}
+	}
+	
+	public void onBulletHit( BulletHitEvent e )
+	{
+		for ( int i = 0; i < strategies.size() ; i++ ) {
+			strategies.get( i ).onBulletHit( this, e );
 		}
 	}
 

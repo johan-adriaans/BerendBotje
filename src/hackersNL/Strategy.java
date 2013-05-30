@@ -9,6 +9,7 @@ import robocode.HitRobotEvent;
 import robocode.HitWallEvent;
 import robocode.RobotDeathEvent;
 import robocode.ScannedRobotEvent;
+import robocode.BulletHitEvent;
 
 public class Strategy
 {	
@@ -49,6 +50,8 @@ public class Strategy
 	public void onPaint ( BerendBotje me, Graphics2D g ) {}
 	
 	public void onHitRobot( BerendBotje me, HitRobotEvent e ) {}
+
+	public void onBulletHit ( BerendBotje me, BulletHitEvent e ) {}
 	
 	public void onHitByBullet( BerendBotje me, HitByBulletEvent e ) {}
 }

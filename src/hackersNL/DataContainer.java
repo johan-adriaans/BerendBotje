@@ -3,6 +3,8 @@ package hackersNL;
 import java.util.EmptyStackException;
 import java.util.Stack;
 
+import robocode.ScannedRobotEvent;
+
 public class DataContainer
 {
 	protected Stack<Enemy> enemies = new Stack<Enemy>();
@@ -24,6 +26,27 @@ public class DataContainer
 		enemies.push( e );
 	}
 	
+	/**
+	 * Detect existing data and update, if no matching Enemy was found, a new enemy is added
+	 * @param scanEvent
+	 */
+	public Enemy processScanEvent( ScannedRobotEvent scanEvent, BerendBotje me )
+	{
+		for ( int i = 0; i < enemies.size(); i++ ) {
+			if ( enemies.get( i ).getName().equals( scanEvent.getName() ) ) {
+				// Update existing and exit
+				//System.out.println( "Updating enemy data for " + scanEvent.getName() );
+				enemies.get( i ).setScanEvent( scanEvent );
+				return enemies.get( i );
+			}
+		}
+		
+		// Nothing found, create new Enemy and add to stack
+		Enemy enemy = new Enemy( me, scanEvent );
+		addEnemy( enemy );
+		return enemy;
+	}
+	
 	public void removeEnemy( String name )
 	{
 		// Has our target died?
@@ -38,6 +61,17 @@ public class DataContainer
 				return;
 			}
 		}		
+	}
+	
+	public Enemy getEnemy( String name )
+	{
+		for ( int i = 0; i < enemies.size(); i++ ) {
+			if ( enemies.get( i ).getName().equals( name ) ) {
+				Enemy e = enemies.get( i );
+				return e;
+			}
+		}
+		throw new EmptyStackException();
 	}
 	
 	public void resetEnemyStack()
